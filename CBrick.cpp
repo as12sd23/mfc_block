@@ -27,7 +27,7 @@ BOOL CBrick::GetAlive()
 }
 CRect CBrick::GetBrickhitboxInfo(int i)
 {
-	if(i >= 0 && i < 4)
+	if (i >= 0 && i < 4)
 		return m_Recthitbox[i];
 }
 CRect CBrick::GetBrickInfo()

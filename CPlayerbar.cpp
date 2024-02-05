@@ -101,3 +101,16 @@ void CPlayerbar::GetPlayerbar_Item()
 	m_PlayerHitbox[1] = CRect(m_Playerbar.left + 7, m_Playerbar.top, m_Playerbar.right - 33, m_Playerbar.bottom);
 	m_PlayerHitbox[2] = CRect(m_Playerbar.right - 20, m_Playerbar.top, m_Playerbar.right, m_Playerbar.bottom);
 }
+
+void CPlayerbar::SetCatchItem()
+{
+	if (m_catch)
+		m_catch = true;
+	else
+		m_catch = false;
+}
+
+BOOL CPlayerbar::GetCatchInfo()
+{
+	return m_catch;
+}

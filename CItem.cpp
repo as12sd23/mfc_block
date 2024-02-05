@@ -29,7 +29,6 @@ void CItem::GetRectItem(int i)
 {
 	m_Rect[i] = CRect(-5, -5, -5, -5);
 	m_Alive[i] = false;
-
 }
 BOOL CItem::GetAlive(int number)
 {
@@ -48,8 +47,12 @@ void CItem::SetItemDraw(CDC* memDC)
 		}
 	}
 }
+BOOL CItem::GetLaser()
+{
+	return m_Laser;
+}
 
-void CItem::GetItemEffect(CPlayerbar *player, CBall *ball[], CLife *life)
+int CItem::GetItemEffect(CPlayerbar* player, CLife* life, CBall ball[])
 {
 	for (int i = 0; i < 7; i++)
 	{
@@ -68,29 +71,50 @@ void CItem::GetItemEffect(CPlayerbar *player, CBall *ball[], CLife *life)
 							break;
 						}
 					}
-					m_Alive[i] = false;
 				}
 				else if (i == 1) // 레이저 발사
 				{
+					if (m_ball == false)
+					{
+						m_Catch = false;
+						m_Long = false;
 
+						m_Laser = true;
+					}
 				}
 				else if (i == 2) // playerbar 길이 증가
 				{
-					player->SetPlayerBar_Item();
+					if (m_ball == false)
+					{
+						m_Catch = false;
+						m_Laser = false;
+
+						if (player->GetCatchInfo())
+							player->SetCatchItem();
+						player->SetPlayerBar_Item();
+						m_Long = true;
+					}
 				}
 				else if (i == 3) // playerbar에 공이 붙음
 				{
+					if (m_ball == false)
+					{
+						m_Laser = false;
+						m_Long = false;
 
+						player->SetCatchItem();
+						m_Catch = true;
+					}
 				}
 				else if (i == 4) // 공 속도 저하
 				{
 					int x = 0, y = 0;
 					for (int i = 0; i < 3; i++)
 					{
-						if (ball[i]->GetAlive())
+						if (ball[i].GetAlive())
 						{
-							x = ball[i]->GetXSpeed();
-							y = ball[i]->GetYSpeed();
+							x = ball[i].GetXSpeed();
+							y = ball[i].GetYSpeed();
 							if (x > 0 && x / 2 == 0)
 								x = 1;
 							else if (x < 0 && x / 2 == 0)
@@ -105,26 +129,25 @@ void CItem::GetItemEffect(CPlayerbar *player, CBall *ball[], CLife *life)
 							else
 								y /= 2;
 
-							ball[i]->SetItemBallXSpeed(x);
-							ball[i]->SetItemBallYSpeed(y);
+							ball[i].SetItemBallXSpeed(x);
+							ball[i].SetItemBallYSpeed(y);
 						}
 					}
-					m_Alive[i] = false;
-				}
-				else if (i == 5) // stage 스킵
-				{
-
 				}
 				else if (i == 6) // 공 3개 
 				{
+					m_Laser = false;
+					m_Catch = false;
+					m_Long = false;
+					m_ball = true;
 					int a = 4;
 					int x = 0;
 					for (int i = 0; i < 3; i++)
 					{
-						if (ball[i]->GetAlive())
+						if (ball[i].GetAlive())
 						{
 							a = i;
-							x = ball[a]->GetXSpeed();
+							x = ball[a].GetXSpeed();
 							if (x > 2)
 								x = 2;
 							else if (x < -2)
@@ -133,16 +156,27 @@ void CItem::GetItemEffect(CPlayerbar *player, CBall *ball[], CLife *life)
 							{
 								if (a != j)
 								{
-									ball[j]->SetItemBall(ball[a]);
+									ball[j].SetItemBall(&ball[a]);
 									if (x < 0)
-										ball[j]->SetItemBallXSpeed(x--);
+										ball[j].SetItemBallXSpeed(x--);
 									else
-										ball[j]->SetItemBallXSpeed(x++);
+										ball[j].SetItemBallXSpeed(x++);
 								}
 							}
 						}
 					}
 				}
+				m_Alive[i] == false;
+				if (i == 5) // stage 스킵
+					return 1;
+				else
+					return 0;
+			}
+
+			if (m_Rect[i].bottom >= 900)
+			{
+				GetRectItem(i);
+				m_Alive[i] = false;
 			}
 		}
 	}

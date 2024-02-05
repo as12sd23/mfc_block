@@ -8,7 +8,7 @@
 #include "CPlayerbar.h"
 #include "CItem.h"
 #include "CLife.h"
-
+#include "CLaser.h"
 // CMFCApplication6Dlg 대화 상자
 class CMFCApplication6Dlg : public CDialogEx
 {
@@ -45,7 +45,7 @@ public:
 	CBall m_Ball[3];
 	CItem m_Item;
 	CLife m_Life;
-	bool m_GameStart = false;
+	CLaser m_Laser;
 	bool m_Stage_Turn = false;
 	afx_msg void OnTimer(UINT_PTR nIDEvent);
 	virtual BOOL PreTranslateMessage(MSG* pMsg);

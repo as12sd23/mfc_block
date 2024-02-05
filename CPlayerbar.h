@@ -8,6 +8,7 @@ private:
 	int m_PlayerLeft;
 	int m_PlayerRight;
 	bool m_Item = false;
+	bool m_catch = false;
 public:
 	void SetPlayerBar(int Center_X, int Center_Y);
 	void SetPlayerBar_Move(int x);
@@ -18,4 +19,6 @@ public:
 	int GetPlayerLeft();
 	CRect GetPlayerInfo();
 	void GetPlayerbar_Item();
+	void SetCatchItem();
+	BOOL GetCatchInfo();
 };

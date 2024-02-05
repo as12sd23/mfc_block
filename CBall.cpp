@@ -21,8 +21,9 @@ void CBall::GetBall()  // 공 죽었을 때
 	y = 0;
 }
 
-void CBall::SetBrick_judgement(CBrick *brick, CPlayerbar *player, CItem *item) // 공 판정
+BOOL CBall::SetBrick_judgement(CBrick *brick, CPlayerbar *player, CItem *item) // 공 판정
 {
+	bool a = false;
 	if (brick->GetAlive())
 	{
 		for (int i = 0; i < 4; i++)
@@ -45,41 +46,50 @@ void CBall::SetBrick_judgement(CBrick *brick, CPlayerbar *player, CItem *item) /
 	}
 	for (int i = 0; i < 3; i++)
 	{
-		if (m_block_judgement.IntersectRect(m_Ball, player->GetPlayerBarInfo(i)))
+		if (m_block_judgement.IntersectRect(m_Ball, player->GetPlayerBarInfo(i)) && player->GetPlayerBarInfo(i))
 		{ // 게임 시작 bool 넣고 SetStart하면 false로 전환되는 시스템 Catch에도 써먹을 예정
-			int a = 0;
-			a = x;
-			if (i == 0)
+			if (player->GetCatchInfo())
 			{
-				if (x < 0)
-					x -= 1;
-				else
-					x *= -1;
-			}
-			else if (i == 2)
-			{
-				if (x < 0)
-					x *= -1;
-				else
-					x += 1;
+				a = true;
+				saveX = x;
+				saveY = y;
 			}
 			else
 			{
-				if (player->GetPlayerLeft() > 0)
-					x += 1;
-				else if (player->GetPlayerLeft() < 0)
-					x -= 1;
-				if (x == 0 && a > 0)
-					x = 1;
-				else if (x == 0 && a < 0)
-					x = -1;
+				int a = 0;
+				a = x;
+				if (i == 0)
+				{
+					if (x < 0)
+						x -= 1;
+					else
+						x *= -1;
+				}
+				else if (i == 2)
+				{
+					if (x < 0)
+						x *= -1;
+					else
+						x += 1;
+				}
+				else
+				{
+					if (player->GetPlayerLeft() > 0)
+						x += 1;
+					else if (player->GetPlayerLeft() < 0)
+						x -= 1;
+					if (x == 0 && a > 0)
+						x = 1;
+					else if (x == 0 && a < 0)
+						x = -1;
+				}
+				if (x > 5)
+					x = 4;
+				else if (x < -5)
+					x = -4;
+				y *= -1;
+				break;
 			}
-			if (x > 5)
-				x = 4;
-			else if (x < -5)
-				x = -4;
-			y *= -1;
-			break;
 		}
 	}
 	if (m_Ball.left <= 0 || m_Ball.right >= 900)
@@ -94,6 +104,7 @@ void CBall::SetBrick_judgement(CBrick *brick, CPlayerbar *player, CItem *item) /
 	{
 		GetBall();
 	}
+	return a;
 }
 
 void CBall::SetBall_Move()
@@ -115,10 +126,21 @@ BOOL CBall::GetAlive()
 	return m_Alive;
 }
 
-void CBall::SetStart()
+void CBall::SetStart(CPlayerbar *player)
 {
-	y = -3;
-	x = 1;
+	if (saveX == 0 && saveY == 0)
+	{
+		y = -3;
+		x = 1;
+	}
+	else
+	{
+		x = saveX;
+		y = saveY;
+		saveX = 0;
+		saveY = 0;
+	}
+	player->SetCatchItem();
 }
 
 void CBall::SetBallMove(int a, int b)
@@ -146,7 +168,6 @@ void CBall::SetBallMove(int a, int b)
 void CBall::SetItemBall(CBall *ball)
 {
 	m_Ball = CRect(ball->GetInfo().left, ball->GetInfo().top, ball->GetInfo().right, ball->GetInfo().bottom);
-
 }
 
 CRect CBall::GetInfo()

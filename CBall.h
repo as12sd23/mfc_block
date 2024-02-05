@@ -8,6 +8,7 @@ class CBall
 {
 private:
 	int x = 0, y = 0;
+	int saveX = 0, saveY = 0;
 	CRect m_Ball;
 	CRect m_block_judgement;
 	CBrush m_Ball_Brush;
@@ -17,11 +18,11 @@ public:
 	void SetBallMove(int x, int y );
 	void SetBall(int Center_X, int Center_Y);
 	void GetBall();
-	void SetBrick_judgement(CBrick *brick, CPlayerbar *player, CItem *item);
+	BOOL SetBrick_judgement(CBrick *brick, CPlayerbar *player, CItem *item);
 	void SetBall_Move();
 	void SetDraw(CDC *memDC);
 	BOOL GetAlive();
-	void SetStart();
+	void SetStart(CPlayerbar *player);
 	void SetItemBall(CBall *ball);
 	CRect GetInfo();
 	void SetItemBallXSpeed(int speed);

@@ -12,6 +12,7 @@
 #include "CBall.h"
 #include "CItem.h"
 #include "CLife.h"
+#include "CLaser.h"
 
 #ifdef _DEBUG
 #define new DEBUG_NEW
@@ -185,7 +186,7 @@ BOOL CMFCApplication6Dlg::PreTranslateMessage(MSG* pMsg)
 		switch (pMsg->wParam)
 		{
 		case VK_RIGHT:
-			if (m_GameStart)
+			if (m_Player.GetCatchInfo())
 			{
 				m_Player.SetPlayerBar_Move(5);
 				m_Ball[0].SetBallMove(5, 0);
@@ -194,7 +195,7 @@ BOOL CMFCApplication6Dlg::PreTranslateMessage(MSG* pMsg)
 				m_Player.SetPlayerBar_Move(10);
 			break;
 		case VK_LEFT:
-			if (m_GameStart)
+			if (m_Player.GetCatchInfo())
 			{
 				m_Player.SetPlayerBar_Move(-5);
 				m_Ball[0].SetBallMove(-5, 0);
@@ -203,10 +204,13 @@ BOOL CMFCApplication6Dlg::PreTranslateMessage(MSG* pMsg)
 				m_Player.SetPlayerBar_Move(-10);
 			break;
 		case VK_UP:
-			if (m_GameStart)
+			if (m_Player.GetCatchInfo())
 			{
-				m_Ball[0].SetStart();
-				m_GameStart = false;
+				m_Ball[0].SetStart(&m_Player);
+			}
+			if (m_Item.GetLaser())
+			{
+				m_Laser.SetLaser(&m_Player);
 			}
 			break;
 		case VK_ESCAPE:
@@ -236,10 +240,11 @@ void CMFCApplication6Dlg::OnClickedButtStart()
 
 
 	GetDlgItem(IDC_EDIT_SCORE)->SetFocus();
-	m_GameStart = true;
+	m_Player.SetCatchItem();
 	Stage(1);
 	m_Life.SetInfo();
 	m_Item.SetItem();
+	m_Laser.SetInfo();
 	m_background_Size = CRect(0, 0, 900, 800);
 	m_Player.SetPlayerBar(m_background_Size.Width(), m_background_Size.Height());
 	m_Ball[0].SetBall(m_background_Size.Width(), m_background_Size.Height());
@@ -271,8 +276,10 @@ void CMFCApplication6Dlg::OnTimer(UINT_PTR nIDEvent)
 	for (int i = 0; i < 91; i++)
 	{
 		m_block[i].SetDrawBrick(&memDC);
+		m_Laser.brick_destroy(&m_block[i]);
 	}
 
+	m_Laser.SetDraw(&memDC);
 	m_Player.SetPlayerBar_Draw(&memDC);
 
 	if (Ball_Timer >= 70)
@@ -307,7 +314,12 @@ void CMFCApplication6Dlg::OnTimer(UINT_PTR nIDEvent)
 	}
 
 	m_Item.SetItemDraw(&memDC);
-	m_Item.GetItemEffect(&m_Player, m_Ball, &m_Life);
+	int item = m_Item.GetItemEffect(&m_Player, &m_Life, m_Ball);
+	if (item > 0)
+	{
+		m_Stage_Turn = true;
+		Stage_Count++;
+	}
 	m_Life.SetDraw(&memDC);
 	a = 0;
 	for (int i = 0; i < 3; i++)
@@ -321,7 +333,7 @@ void CMFCApplication6Dlg::OnTimer(UINT_PTR nIDEvent)
 		{
 			m_Player.SetPlayerBar(m_background_Size.Width(), m_background_Size.Height());
 			m_Ball[0].SetBall(m_background_Size.Width(), m_background_Size.Height());
-			m_GameStart = true;
+			m_Player.SetCatchItem();
 		}
 		else
 		{
