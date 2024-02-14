@@ -15,14 +15,18 @@ void CItem::SetItem()
 	m_Color[5].CreateSolidBrush(RGB(255, 18, 239));		// 스테이지 넘기는 아이템
 	m_Color[6].CreateSolidBrush(RGB(0, 216, 255));		// ball이 3개로 나뉘는 아이템
 
+	m_Ball = false;
+	m_Catch = false;
+	m_Laser = false;
+	m_Long = false;
 	for (int i = 0; i < 7; i++)
 	{
 		m_Alive[i] = false;
 	}
 }
-void CItem::SetRectItem(CBrick *brick, int i)
+void CItem::SetRectItem(CRect brick, int i)
 {
-	m_Rect[i] = CRect(brick->GetBrickInfo().left + 10, brick->GetBrickInfo().top + 5, brick->GetBrickInfo().left + 58, brick->GetBrickInfo().top + 25);
+	m_Rect[i] = CRect(brick.left + 10, brick.top + 5, brick.left + 58, brick.top + 25);
 	m_Alive[i] = true;
 }
 void CItem::GetRectItem(int i)
@@ -51,9 +55,21 @@ BOOL CItem::GetLaser()
 {
 	return m_Laser;
 }
-
-int CItem::GetItemEffect(CPlayerbar* player, CLife* life, CBall ball[])
+BOOL CItem::GetCatch()
 {
+	return m_Catch;
+}
+BOOL CItem::GetLong()
+{
+	return m_Long;
+}
+BOOL CItem::GetBall()
+{
+	return m_Ball;
+}
+int CItem::GetItemEffect(CPlayerbar* player, CLife* life)
+{
+	int item = 100;
 	for (int i = 0; i < 7; i++)
 	{
 		if (m_Alive[i])
@@ -63,20 +79,15 @@ int CItem::GetItemEffect(CPlayerbar* player, CLife* life, CBall ball[])
 				GetRectItem(i);
 				if (i == 0) // 목숨 추가
 				{
-					for (int j = 0; j < 10; j++)
-					{
-						if (life->GetAlive(j) == false)
-						{
-							life->SetAlive(j);
-							break;
-						}
-					}
+					life->SetAlive();
 				}
 				else if (i == 1) // 레이저 발사
 				{
-					if (m_ball == false)
+					if (m_Ball == false)
 					{
 						m_Catch = false;
+						if(m_Long)
+							player->GetPlayerbar_Item();
 						m_Long = false;
 
 						m_Laser = true;
@@ -84,93 +95,44 @@ int CItem::GetItemEffect(CPlayerbar* player, CLife* life, CBall ball[])
 				}
 				else if (i == 2) // playerbar 길이 증가
 				{
-					if (m_ball == false)
+					if (m_Ball == false)
 					{
 						m_Catch = false;
 						m_Laser = false;
-
-						if (player->GetCatchInfo())
-							player->SetCatchItem();
-						player->SetPlayerBar_Item();
 						m_Long = true;
+						player->SetPlayerBar_Item();
 					}
 				}
 				else if (i == 3) // playerbar에 공이 붙음
 				{
-					if (m_ball == false)
+					if (m_Ball == false)
 					{
 						m_Laser = false;
+						if (m_Long)
+							player->GetPlayerbar_Item();
 						m_Long = false;
-
-						player->SetCatchItem();
 						m_Catch = true;
+						item = 3;
 					}
 				}
 				else if (i == 4) // 공 속도 저하
 				{
-					int x = 0, y = 0;
-					for (int i = 0; i < 3; i++)
-					{
-						if (ball[i].GetAlive())
-						{
-							x = ball[i].GetXSpeed();
-							y = ball[i].GetYSpeed();
-							if (x > 0 && x / 2 == 0)
-								x = 1;
-							else if (x < 0 && x / 2 == 0)
-								x = -1;
-							else
-								x /= 2;
-
-							if (y > 0 && y / 2 == 0)
-								y = 1;
-							else if (y < 0 && y / 2 == 0)
-								y = -1;
-							else
-								y /= 2;
-
-							ball[i].SetItemBallXSpeed(x);
-							ball[i].SetItemBallYSpeed(y);
-						}
-					}
+					item = 4;
 				}
 				else if (i == 6) // 공 3개 
 				{
 					m_Laser = false;
 					m_Catch = false;
+					if (m_Long)
+						player->GetPlayerbar_Item();
 					m_Long = false;
-					m_ball = true;
-					int a = 4;
-					int x = 0;
-					for (int i = 0; i < 3; i++)
-					{
-						if (ball[i].GetAlive())
-						{
-							a = i;
-							x = ball[a].GetXSpeed();
-							if (x > 2)
-								x = 2;
-							else if (x < -2)
-								x = -2;
-							for (int j = 0; j < 3; j++)
-							{
-								if (a != j)
-								{
-									ball[j].SetItemBall(&ball[a]);
-									if (x < 0)
-										ball[j].SetItemBallXSpeed(x--);
-									else
-										ball[j].SetItemBallXSpeed(x++);
-								}
-							}
-						}
-					}
+					m_Ball = true;
 				}
-				m_Alive[i] == false;
+				m_Alive[i] = false;
 				if (i == 5) // stage 스킵
-					return 1;
+					item = 1;
 				else
-					return 0;
+					item = 100;
 			}
 
 			if (m_Rect[i].bottom >= 900)
@@ -180,4 +142,5 @@ int CItem::GetItemEffect(CPlayerbar* player, CLife* life, CBall ball[])
 			}
 		}
 	}
+	return item;
 }

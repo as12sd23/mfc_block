@@ -8,6 +8,7 @@ private:
 	CBrush m_Color;
 	bool m_Alive = false;
 public:
+	void SetInfo();
 	void SetBrick(int x, int y);
 	void GetBrick();
 	void SetDrawBrick(CDC* memDC);

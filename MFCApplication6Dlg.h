@@ -45,12 +45,15 @@ public:
 	CBall m_Ball[3];
 	CItem m_Item;
 	CLife m_Life;
-	CLaser m_Laser;
+	CLaser m_Laser[3];
 	bool m_Stage_Turn = false;
+	bool m_GameStart = true;
+	bool m_Catch = false;
 	afx_msg void OnTimer(UINT_PTR nIDEvent);
 	virtual BOOL PreTranslateMessage(MSG* pMsg);
 	afx_msg void OnClickedButtStart();
 	afx_msg void OnClickedButtExit();
 	void Stage(int step);
 	int m_Edit_SCORE;
+	int m_Laser_Timer = 0;
 };

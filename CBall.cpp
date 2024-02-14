@@ -4,12 +4,15 @@
 #include "CPlayerbar.h"
 #include "CItem.h"
 
+void CBall::SetInfo()
+{
+	m_Ball_Brush.CreateSolidBrush(RGB(92, 209, 229));
+}
 void CBall::SetBall(int Center_X, int Center_Y)  // 공 기본 세팅
 {
 	Center_X /= 2;
 	Center_Y = Center_Y - (Center_Y / 9);
 	m_Ball = CRect(Center_X - 7, Center_Y - 14, Center_X + 7, Center_Y);
-	m_Ball_Brush.CreateSolidBrush(RGB(92, 209, 229));
 	m_Alive = true;
 }
 
@@ -21,9 +24,9 @@ void CBall::GetBall()  // 공 죽었을 때
 	y = 0;
 }
 
-BOOL CBall::SetBrick_judgement(CBrick *brick, CPlayerbar *player, CItem *item) // 공 판정
+int CBall::SetBrick_judgement(CBrick *brick, CPlayerbar *player, bool Catch) // 공 판정
 {
-	bool a = false;
+	int random = 100;
 	if (brick->GetAlive())
 	{
 		for (int i = 0; i < 4; i++)
@@ -35,11 +38,7 @@ BOOL CBall::SetBrick_judgement(CBrick *brick, CPlayerbar *player, CItem *item) /
 					x *= -1;
 				else if (i == 2 || i == 3)
 					y *= -1;
-				int random = rand() % 100;
-				if (random >= 0 && random < 7 && item->GetAlive(random) == false)
-				{
-					item->SetRectItem(brick, random);
-				}
+				random = rand() % 100;
 				break;
 			}
 		}
@@ -48,11 +47,13 @@ BOOL CBall::SetBrick_judgement(CBrick *brick, CPlayerbar *player, CItem *item) /
 	{
 		if (m_block_judgement.IntersectRect(m_Ball, player->GetPlayerBarInfo(i)) && player->GetPlayerBarInfo(i))
 		{ // 게임 시작 bool 넣고 SetStart하면 false로 전환되는 시스템 Catch에도 써먹을 예정
-			if (player->GetCatchInfo())
+			if (Catch)
 			{
-				a = true;
+				random = 101;
 				saveX = x;
 				saveY = y;
+				x = 0;
+				y = 0;
 			}
 			else
 			{
@@ -104,7 +105,7 @@ BOOL CBall::SetBrick_judgement(CBrick *brick, CPlayerbar *player, CItem *item) /
 	{
 		GetBall();
 	}
-	return a;
+	return 3;
 }
 
 void CBall::SetBall_Move()
@@ -126,9 +127,9 @@ BOOL CBall::GetAlive()
 	return m_Alive;
 }
 
-void CBall::SetStart(CPlayerbar *player)
+void CBall::SetStart(bool Catch)
 {
-	if (saveX == 0 && saveY == 0)
+	if (Catch == false)
 	{
 		y = -3;
 		x = 1;
@@ -140,7 +141,6 @@ void CBall::SetStart(CPlayerbar *player)
 		saveX = 0;
 		saveY = 0;
 	}
-	player->SetCatchItem();
 }
 
 void CBall::SetBallMove(int a, int b)
@@ -165,9 +165,10 @@ void CBall::SetBallMove(int a, int b)
 	}
 }
 
-void CBall::SetItemBall(CBall *ball)
+void CBall::SetItemBall(CRect ball)
 {
-	m_Ball = CRect(ball->GetInfo().left, ball->GetInfo().top, ball->GetInfo().right, ball->GetInfo().bottom);
+	m_Ball = CRect(ball.left, ball.top, ball.right, ball.bottom);
+	m_Alive = true;
 }
 
 CRect CBall::GetInfo()
@@ -190,4 +191,23 @@ int CBall::GetXSpeed()
 int CBall::GetYSpeed()
 {
 	return y;
+}
+void CBall::SetSpeedSlow()
+{
+	if (m_Alive)
+	{
+		if (x > 0 && x / 2 == 0)
+			x = 1;
+		else if (x < 0 && x / 2 == 0)
+			x = -1;
+		else
+			x /= 2;
+
+		if (y > 0 && y / 2 == 0)
+			y = 1;
+		else if (y < 0 && y / 2 == 0)
+			y = -1;
+		else
+			y /= 2;
+	}
 }

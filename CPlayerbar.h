@@ -7,18 +7,15 @@ private:
 	CBrush m_PlayerColor;
 	int m_PlayerLeft;
 	int m_PlayerRight;
-	bool m_Item = false;
-	bool m_catch = false;
 public:
+	void SetInfo();
 	void SetPlayerBar(int Center_X, int Center_Y);
 	void SetPlayerBar_Move(int x);
 	void SetPlayerBar_Draw(CDC *memDC);
 	void SetPlayerBar_Item();
 	CRect GetPlayerBarInfo(int i);
-	void SetPlayerLeft();
+	void SetPlayerLeft(bool Catch);
 	int GetPlayerLeft();
 	CRect GetPlayerInfo();
 	void GetPlayerbar_Item();
-	void SetCatchItem();
-	BOOL GetCatchInfo();
 };

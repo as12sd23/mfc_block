@@ -186,31 +186,49 @@ BOOL CMFCApplication6Dlg::PreTranslateMessage(MSG* pMsg)
 		switch (pMsg->wParam)
 		{
 		case VK_RIGHT:
-			if (m_Player.GetCatchInfo())
+			if (m_Catch || m_GameStart)
 			{
-				m_Player.SetPlayerBar_Move(5);
-				m_Ball[0].SetBallMove(5, 0);
+				m_Player.SetPlayerBar_Move(8);
+				for (int i = 0; i < 3; i++)
+				{
+					if(m_Ball[i].GetAlive())
+						m_Ball[i].SetBallMove(8, 0);
+				}
 			}
 			else
 				m_Player.SetPlayerBar_Move(10);
 			break;
 		case VK_LEFT:
-			if (m_Player.GetCatchInfo())
+			if (m_Catch || m_GameStart)
 			{
-				m_Player.SetPlayerBar_Move(-5);
-				m_Ball[0].SetBallMove(-5, 0);
+				m_Player.SetPlayerBar_Move(-8);
+				m_Ball[0].SetBallMove(-8, 0);
 			}
 			else
 				m_Player.SetPlayerBar_Move(-10);
 			break;
 		case VK_UP:
-			if (m_Player.GetCatchInfo())
+			if (m_Catch || m_GameStart)
 			{
-				m_Ball[0].SetStart(&m_Player);
+				m_Ball[0].SetStart(m_Item.GetCatch());
+				if (m_GameStart)
+					m_GameStart = false;
+				if (m_Catch)
+					m_Catch = false;
 			}
 			if (m_Item.GetLaser())
 			{
-				m_Laser.SetLaser(&m_Player);
+				if (m_Laser_Timer >= 100)
+				{
+					for (int i = 0; i < 3; i++)
+					{
+						if (m_Laser[i].GetAlive() == false)
+						{
+							m_Laser[i].SetLaser(m_Player.GetPlayerInfo());
+							m_Laser_Timer = 0;
+						}
+					}
+				}
 			}
 			break;
 		case VK_ESCAPE:
@@ -240,11 +258,19 @@ void CMFCApplication6Dlg::OnClickedButtStart()
 
 
 	GetDlgItem(IDC_EDIT_SCORE)->SetFocus();
-	m_Player.SetCatchItem();
 	Stage(1);
+	for (int i = 0; i < 3; i++)
+	{
+		m_Ball[i].SetInfo();
+		m_Laser[i].SetInfo();
+	}
+	for (int i = 0; i < 91; i++)
+	{
+		m_block[i].SetInfo();
+	}
+	m_Player.SetInfo();
 	m_Life.SetInfo();
 	m_Item.SetItem();
-	m_Laser.SetInfo();
 	m_background_Size = CRect(0, 0, 900, 800);
 	m_Player.SetPlayerBar(m_background_Size.Width(), m_background_Size.Height());
 	m_Ball[0].SetBall(m_background_Size.Width(), m_background_Size.Height());
@@ -265,10 +291,11 @@ void CMFCApplication6Dlg::OnTimer(UINT_PTR nIDEvent)
 	static int Stage_Count = 1, Ball_Timer = 0;
 	int a = 0;
 	Ball_Timer++;
+	m_Laser_Timer++;
 	CClientDC dc(this);
 	memDC.SelectObject(&m_background);
 	memDC.Rectangle(m_background_Size);
-
+	m_Life.SetLife(m_background_Size.Width(),m_background_Size.Height());
 	if (m_Stage_Turn)
 	{
 		Stage(Stage_Count);
@@ -276,29 +303,45 @@ void CMFCApplication6Dlg::OnTimer(UINT_PTR nIDEvent)
 	for (int i = 0; i < 91; i++)
 	{
 		m_block[i].SetDrawBrick(&memDC);
-		m_Laser.brick_destroy(&m_block[i]);
+		for(int j = 0;j < 3;j++)
+			m_Laser[j].brick_destroy(&m_block[i]);
 	}
-
-	m_Laser.SetDraw(&memDC);
+	for (int i = 0; i < 3; i++)
+	{
+		m_Laser[i].SetDraw(&memDC);
+	}
 	m_Player.SetPlayerBar_Draw(&memDC);
 
 	if (Ball_Timer >= 70)
 	{
-		m_Player.SetPlayerLeft();
+		m_Player.SetPlayerLeft(m_Item.GetCatch());
 		Ball_Timer = 0;
 	}
 	bool bounce = true;
+	int item_random = 100;
 	for (int i = 0; i < 3; i++)
 	{
 		for (int j = 0; j < 91; j++)
 		{
-			m_Ball[i].SetBrick_judgement(&m_block[j], &m_Player, &m_Item);
+			item_random = m_Ball[i].SetBrick_judgement(&m_block[j], &m_Player, m_Item.GetCatch());
+			if (item_random >= 0 && item_random < 7 && m_Item.GetAlive(item_random) == false)
+			{
+				m_Item.SetRectItem(m_block[j].GetBrickInfo(), item_random);
+			}
+			if (m_Item.GetCatch() && item_random == 101)
+			{
+				m_Catch = true;
+			}
 		}
 		m_Ball[i].SetBall_Move();
 		m_Ball[i].SetDraw(&memDC);
 	}
+
+	m_Item.SetItemDraw(&memDC);
+
+	// 타이머 보기 위한 함수
 	UpdateData(TRUE);
-	m_Edit_SCORE = Ball_Timer;
+	m_Edit_SCORE = m_Laser_Timer;
 	UpdateData(FALSE);
 
 	for (int i = 0; i < 91; i++)
@@ -313,13 +356,70 @@ void CMFCApplication6Dlg::OnTimer(UINT_PTR nIDEvent)
 		MessageBox("GAME CLEAR", "알림", NULL);
 	}
 
-	m_Item.SetItemDraw(&memDC);
-	int item = m_Item.GetItemEffect(&m_Player, &m_Life, m_Ball);
-	if (item > 0)
+	int item = m_Item.GetItemEffect(&m_Player, &m_Life);
+	if (item == 1)
 	{
+		for (int i = 0; i < 91; i++)
+			m_block[i].GetBrick();
 		m_Stage_Turn = true;
 		Stage_Count++;
 	}
+	else if (item == 4)
+	{
+		for (int i = 0; i < 3; i++)
+		{
+			m_Ball[i].SetSpeedSlow();
+		}
+	}
+	else if (item == 6)
+	{
+		int ball = 0, number = 5;
+		for (int i = 0; i < 3; i++)
+		{
+			if (m_Ball[i].GetAlive())
+			{
+				ball++;
+				number = i;
+			}
+		}
+		if (ball == 1)
+		{
+			int x = 0, y = 0, Count = 0, Count1 = 5;
+			for (int i = 0; i < 3; i++)
+			{
+				if (number != i)
+				{
+					x = m_Ball[number].GetXSpeed();
+					y = m_Ball[number].GetYSpeed();
+					if (x > 2)
+						x = 2;
+					else if (x < -2)
+						x = -2;
+					for (int j = 0; j < 3; j++)
+					{
+						if (j != number && Count1 != j)
+						{
+							m_Ball[j].SetItemBall(m_Ball[number].GetInfo());
+							Count = j;
+							if (Count == 0)
+							{
+								m_Ball[j].SetItemBallXSpeed(x--);
+								m_Ball[j].SetItemBallYSpeed(y);
+								break;
+							}
+							else
+							{
+								m_Ball[j].SetItemBallXSpeed(x++);
+								m_Ball[j].SetItemBallYSpeed(y);
+							}
+							Count++;
+						}
+					}
+				}
+			}
+		}
+	}
+
 	m_Life.SetDraw(&memDC);
 	a = 0;
 	for (int i = 0; i < 3; i++)
@@ -331,9 +431,9 @@ void CMFCApplication6Dlg::OnTimer(UINT_PTR nIDEvent)
 	{
 		if (m_Life.SetDelete())
 		{
+			m_GameStart = true;
 			m_Player.SetPlayerBar(m_background_Size.Width(), m_background_Size.Height());
 			m_Ball[0].SetBall(m_background_Size.Width(), m_background_Size.Height());
-			m_Player.SetCatchItem();
 		}
 		else
 		{

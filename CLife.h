@@ -9,7 +9,7 @@ public:
 	BOOL GetAlive(int i);
 	void SetLife(int X, int Y);
 	void SetDraw(CDC* memDC);
-	void SetAlive(int i);
+	void SetAlive();
 	BOOL SetDelete();
 	void SetInfo();
 };

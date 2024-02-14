@@ -14,13 +14,17 @@ private:
 	bool m_Laser = false;
 	bool m_Catch = false;
 	bool m_Long = false;
-	bool m_ball = false;
+	bool m_Ball = false;
 public:
 	void SetItem();
-	void SetRectItem(CBrick* brick, int i);
+	void SetRectItem(CRect brick, int i);
 	void GetRectItem(int i);
 	void SetItemDraw(CDC* memDC);
 	BOOL GetAlive(int number);
 	BOOL GetLaser();
-	int GetItemEffect(CPlayerbar* player, CLife* life, CBall ball[]);
+	BOOL GetCatch();
+	BOOL GetLong();
+	BOOL GetBall();
+	int GetItemEffect(CPlayerbar* player, CLife* life);
+
 };

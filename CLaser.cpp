@@ -6,59 +6,69 @@
 void CLaser::SetInfo()
 {
 	m_Color.CreateSolidBrush(RGB(255, 18, 18));
-	for (int i = 0; i < 20; i++)
+	for (int i = 0; i < 2; i++)
 	{
 		m_Alive[i] = false;
 	}
 }
 void CLaser::SetDraw(CDC* memDC)
 {
-	for (int i = 0; i < 20; i++)
+	for (int i = 0; i < 2; i++)
 	{
 		if (m_Alive[i])
 		{
 			m_beam[i].OffsetRect(0, -3);
 			memDC->SelectObject(m_Color);
 			memDC->Rectangle(m_beam[i]);
+			if (m_beam[i].bottom <= 0)
+				m_Alive[i] = false;
 		}
 	}
 }
-void CLaser::brick_destroy(CBrick *brick, CItem *item)
+int CLaser::brick_destroy(CBrick *brick)
 {
-	for (int i = 0; i < 20; i++)
+	int random = 100;
+	for (int i = 0; i < 2; i++)
 	{
 		if (m_Alive[i])
 		{
-			if (brick_jugement.IntersectRect(brick->GetBrickInfo(), m_beam[i]))
+			if (brick->GetAlive())
 			{
-				m_Alive[i] = false;
-				brick->GetBrick();
-				int random = rand() % 100;
-				if (random >= 0 && random < 7 && item->GetAlive(random) == false)
+				if (brick_jugement.IntersectRect(brick->GetBrickInfo(), m_beam[i]))
 				{
-					item->SetRectItem(brick, random);
+					m_Alive[i] = false;
+					brick->GetBrick();
+					random = rand() % 100;
+					break;
 				}
-				break;
 			}
 		}
 	}
+	return random;
 }
 
-void CLaser::SetLaser(CPlayerbar* player)
+void CLaser::SetLaser(CRect player)
 {
-	int Count = 0;
-	for (int i = 0; i < 20; i++)
+	for (int i = 0; i < 2; i++)
 	{
 		if (m_Alive[i] == false)
 		{
 			m_Alive[i] = true;
-			Count++;
-			if (Count == 1)
-				m_beam[i] = CRect(player->GetPlayerInfo().left, player->GetPlayerInfo().top, player->GetPlayerInfo().left + 10, player->GetPlayerInfo().top + 10);
-			else if (Count == 2)
-				m_beam[i] = CRect(player->GetPlayerInfo().right - 10, player->GetPlayerInfo().top, player->GetPlayerInfo().right, player->GetPlayerInfo().top + 10);
+			if(i == 0)
+				m_beam[0] = CRect(player.left, player.top, player.left + 10, player.top + 10);
+			if(i == 1)
+				m_beam[1] = CRect(player.right - 10, player.top, player.right, player.top + 10);
 		}
-		if (Count >= 2)
-			break;
 	}
+}
+
+BOOL CLaser::GetAlive()
+{
+	bool laser = false;
+	for (int i = 0; i < 2; i++)
+	{
+		if(m_Alive[i])
+			laser = true;
+	}
+	return laser;
 }
