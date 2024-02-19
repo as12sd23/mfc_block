@@ -13,13 +13,14 @@ private:
 	CRect m_block_judgement;
 	CBrush m_Ball_Brush;
 	bool m_Alive = false;
-	bool m_Catch = false;
 public:
+	void SetSpeedUp();
 	void SetInfo();
-	void SetBallMove(int x, int y );
+	void SetBallMove(int a, int b, bool Catch );
 	void SetBall(int Center_X, int Center_Y);
 	void GetBall();
-	int SetBrick_judgement(CBrick *brick, CPlayerbar *player, bool Catch);
+	int SetBrick_judgement(CBrick *brick, bool bounce);
+	BOOL SetPlayerJudgement(CPlayerbar* player, bool Catch, int Timer);
 	void SetBall_Move();
 	void SetDraw(CDC *memDC);
 	BOOL GetAlive();
@@ -31,4 +32,5 @@ public:
 	int GetXSpeed();
 	int GetYSpeed();
 	void SetSpeedSlow();
+	void SetSplitBall(int Speedx, int Speedy, CRect ball);
 };

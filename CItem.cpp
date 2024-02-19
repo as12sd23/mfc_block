@@ -67,6 +67,12 @@ BOOL CItem::GetBall()
 {
 	return m_Ball;
 }
+void CItem::SetBallDestroy(CPlayerbar *player)
+{
+	m_Catch = false;
+	m_Long = false;
+	m_Laser = false;
+}
 int CItem::GetItemEffect(CPlayerbar* player, CLife* life)
 {
 	int item = 100;
@@ -127,12 +133,11 @@ int CItem::GetItemEffect(CPlayerbar* player, CLife* life)
 						player->GetPlayerbar_Item();
 					m_Long = false;
 					m_Ball = true;
+					item = 6;
 				}
 				m_Alive[i] = false;
 				if (i == 5) // stage ½ºÅµ
 					item = 1;
-				else
-					item = 100;
 			}
 
 			if (m_Rect[i].bottom >= 900)

@@ -192,17 +192,23 @@ BOOL CMFCApplication6Dlg::PreTranslateMessage(MSG* pMsg)
 				for (int i = 0; i < 3; i++)
 				{
 					if(m_Ball[i].GetAlive())
-						m_Ball[i].SetBallMove(8, 0);
+						m_Ball[i].SetBallMove(10, 0, m_Item.GetCatch());
 				}
 			}
 			else
-				m_Player.SetPlayerBar_Move(10);
+			m_Player.SetPlayerBar_Move(10);
 			break;
 		case VK_LEFT:
 			if (m_Catch || m_GameStart)
 			{
 				m_Player.SetPlayerBar_Move(-8);
-				m_Ball[0].SetBallMove(-8, 0);
+				for (int i = 0; i < 3; i++)
+				{
+					if (m_Ball[i].GetAlive())
+					{
+						m_Ball[i].SetBallMove(-10, 0, m_Item.GetCatch());
+					}
+				}
 			}
 			else
 				m_Player.SetPlayerBar_Move(-10);
@@ -210,11 +216,15 @@ BOOL CMFCApplication6Dlg::PreTranslateMessage(MSG* pMsg)
 		case VK_UP:
 			if (m_Catch || m_GameStart)
 			{
-				m_Ball[0].SetStart(m_Item.GetCatch());
-				if (m_GameStart)
-					m_GameStart = false;
-				if (m_Catch)
-					m_Catch = false;
+				m_GameStart = false;
+				m_Catch = false;
+				for (int i = 0; i < 3; i++)
+				{
+					if (m_Ball[i].GetAlive())
+					{
+						m_Ball[i].SetStart(m_Item.GetCatch());
+					}
+				}
 			}
 			if (m_Item.GetLaser())
 			{
@@ -271,6 +281,7 @@ void CMFCApplication6Dlg::OnClickedButtStart()
 	m_Player.SetInfo();
 	m_Life.SetInfo();
 	m_Item.SetItem();
+	m_GameStart = true;
 	m_background_Size = CRect(0, 0, 900, 800);
 	m_Player.SetPlayerBar(m_background_Size.Width(), m_background_Size.Height());
 	m_Ball[0].SetBall(m_background_Size.Width(), m_background_Size.Height());
@@ -292,13 +303,18 @@ void CMFCApplication6Dlg::OnTimer(UINT_PTR nIDEvent)
 	int a = 0;
 	Ball_Timer++;
 	m_Laser_Timer++;
+	m_CatchTimer++;
+	m_BallSpeedUp++;
 	CClientDC dc(this);
 	memDC.SelectObject(&m_background);
 	memDC.Rectangle(m_background_Size);
 	m_Life.SetLife(m_background_Size.Width(),m_background_Size.Height());
 	if (m_Stage_Turn)
 	{
+		if (Stage_Count > 2)
+			Stage_Count = 1;
 		Stage(Stage_Count);
+		m_GameStart = true;
 	}
 	for (int i = 0; i < 91; i++)
 	{
@@ -312,37 +328,47 @@ void CMFCApplication6Dlg::OnTimer(UINT_PTR nIDEvent)
 	}
 	m_Player.SetPlayerBar_Draw(&memDC);
 
-	if (Ball_Timer >= 70)
+	if (Ball_Timer >= 100)
 	{
 		m_Player.SetPlayerLeft(m_Item.GetCatch());
 		Ball_Timer = 0;
 	}
-	bool bounce = true;
+
 	int item_random = 100;
+	bool bounce = true;
 	for (int i = 0; i < 3; i++)
 	{
+		if (m_BallSpeedUp > 2000 && m_Catch == false)
+		{
+			m_Ball[i].SetSpeedUp();
+			m_BallSpeedUp = 0;
+		}
+		m_Ball[i].SetBall_Move();
 		for (int j = 0; j < 91; j++)
 		{
-			item_random = m_Ball[i].SetBrick_judgement(&m_block[j], &m_Player, m_Item.GetCatch());
+			item_random = m_Ball[i].SetBrick_judgement(&m_block[j], bounce);
 			if (item_random >= 0 && item_random < 7 && m_Item.GetAlive(item_random) == false)
 			{
 				m_Item.SetRectItem(m_block[j].GetBrickInfo(), item_random);
 			}
-			if (m_Item.GetCatch() && item_random == 101)
+			UpdateData(TRUE);
+			if (item_random < 100)
 			{
-				m_Catch = true;
+				m_Edit_SCORE += 20;
+				bounce = false;
 			}
+			UpdateData(FALSE);
 		}
-		m_Ball[i].SetBall_Move();
+		bounce = m_Ball[i].SetPlayerJudgement(&m_Player, m_Item.GetCatch(), m_CatchTimer);
+		if (bounce && m_CatchTimer > 200)
+		{
+			m_Catch = true;
+			m_CatchTimer = 0;
+		}
 		m_Ball[i].SetDraw(&memDC);
 	}
 
 	m_Item.SetItemDraw(&memDC);
-
-	// 타이머 보기 위한 함수
-	UpdateData(TRUE);
-	m_Edit_SCORE = m_Laser_Timer;
-	UpdateData(FALSE);
 
 	for (int i = 0; i < 91; i++)
 	{
@@ -379,42 +405,21 @@ void CMFCApplication6Dlg::OnTimer(UINT_PTR nIDEvent)
 			if (m_Ball[i].GetAlive())
 			{
 				ball++;
-				number = i;
+				number = 0;
 			}
 		}
 		if (ball == 1)
 		{
-			int x = 0, y = 0, Count = 0, Count1 = 5;
+			int ballCountNumber = 0;
 			for (int i = 0; i < 3; i++)
 			{
-				if (number != i)
+				if (i != number)
 				{
-					x = m_Ball[number].GetXSpeed();
-					y = m_Ball[number].GetYSpeed();
-					if (x > 2)
-						x = 2;
-					else if (x < -2)
-						x = -2;
-					for (int j = 0; j < 3; j++)
-					{
-						if (j != number && Count1 != j)
-						{
-							m_Ball[j].SetItemBall(m_Ball[number].GetInfo());
-							Count = j;
-							if (Count == 0)
-							{
-								m_Ball[j].SetItemBallXSpeed(x--);
-								m_Ball[j].SetItemBallYSpeed(y);
-								break;
-							}
-							else
-							{
-								m_Ball[j].SetItemBallXSpeed(x++);
-								m_Ball[j].SetItemBallYSpeed(y);
-							}
-							Count++;
-						}
-					}
+					if(ballCountNumber == 0)
+						m_Ball[i].SetSplitBall(m_Ball[number].GetXSpeed() + 1, m_Ball[number].GetYSpeed(), m_Ball[number].GetInfo());
+					else
+						m_Ball[i].SetSplitBall(m_Ball[number].GetXSpeed() - 1, m_Ball[number].GetYSpeed(), m_Ball[number].GetInfo());
+					ballCountNumber++;
 				}
 			}
 		}
@@ -434,6 +439,7 @@ void CMFCApplication6Dlg::OnTimer(UINT_PTR nIDEvent)
 			m_GameStart = true;
 			m_Player.SetPlayerBar(m_background_Size.Width(), m_background_Size.Height());
 			m_Ball[0].SetBall(m_background_Size.Width(), m_background_Size.Height());
+			m_Item.SetBallDestroy(&m_Player);
 		}
 		else
 		{
@@ -454,6 +460,7 @@ void CMFCApplication6Dlg::Stage(int Step)
 	switch (Step)
 	{
 	case 1:
+	{
 		x = 2, y = 100;
 		for (int i = 0; i < 91; i++)
 		{
@@ -466,7 +473,9 @@ void CMFCApplication6Dlg::Stage(int Step)
 			}
 		}
 		break;
+	}
 	case 2:
+	{
 		x = 2, y = 60;
 		int a = 0;
 		for (int i = 0; i < 13; i++)
@@ -480,5 +489,6 @@ void CMFCApplication6Dlg::Stage(int Step)
 			y += 31;
 		}
 		break;
+	}
 	}
 }

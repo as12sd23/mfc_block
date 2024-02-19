@@ -47,7 +47,7 @@ public:
 	CLife m_Life;
 	CLaser m_Laser[3];
 	bool m_Stage_Turn = false;
-	bool m_GameStart = true;
+	bool m_GameStart = false;
 	bool m_Catch = false;
 	afx_msg void OnTimer(UINT_PTR nIDEvent);
 	virtual BOOL PreTranslateMessage(MSG* pMsg);
@@ -56,4 +56,6 @@ public:
 	void Stage(int step);
 	int m_Edit_SCORE;
 	int m_Laser_Timer = 0;
+	int m_CatchTimer = 0;
+	int m_BallSpeedUp = 0;
 };

@@ -26,5 +26,5 @@ public:
 	BOOL GetLong();
 	BOOL GetBall();
 	int GetItemEffect(CPlayerbar* player, CLife* life);
-
+	void SetBallDestroy(CPlayerbar *player);
 };

@@ -24,39 +24,43 @@ void CBall::GetBall()  // 공 죽었을 때
 	y = 0;
 }
 
-int CBall::SetBrick_judgement(CBrick *brick, CPlayerbar *player, bool Catch) // 공 판정
+int CBall::SetBrick_judgement(CBrick* brick, bool bounce) // 공 판정
 {
 	int random = 100;
-	if (brick->GetAlive())
+	if (m_Alive)
 	{
-		for (int i = 0; i < 4; i++)
+		if (brick->GetAlive())
 		{
-			if (m_block_judgement.IntersectRect(m_Ball, brick->GetBrickhitboxInfo(i)))
+			for (int i = 0; i < 4; i++)
 			{
-				brick->GetBrick();
-				if (i == 0 || i == 1)
-					x *= -1;
-				else if (i == 2 || i == 3)
-					y *= -1;
-				random = rand() % 100;
-				break;
+				if (m_block_judgement.IntersectRect(m_Ball, brick->GetBrickhitboxInfo(i)))
+				{
+					brick->GetBrick();
+					if (bounce)
+					{
+						if (i == 0 || i == 1)
+							x *= -1;
+						else if (i == 2 || i == 3)
+							y *= -1;
+					}
+					random = rand() % 100;
+					break;
+				}
 			}
 		}
 	}
-	for (int i = 0; i < 3; i++)
+	return random;
+}
+BOOL CBall::SetPlayerJudgement(CPlayerbar* player, bool Catch, int Timer)
+{
+	bool bounce = false;
+	if (m_Alive)
 	{
-		if (m_block_judgement.IntersectRect(m_Ball, player->GetPlayerBarInfo(i)) && player->GetPlayerBarInfo(i))
-		{ // 게임 시작 bool 넣고 SetStart하면 false로 전환되는 시스템 Catch에도 써먹을 예정
-			if (Catch)
-			{
-				random = 101;
-				saveX = x;
-				saveY = y;
-				x = 0;
-				y = 0;
-			}
-			else
-			{
+		for (int i = 0; i < 3; i++)
+		{
+			if (m_block_judgement.IntersectRect(m_Ball, player->GetPlayerBarInfo(i)) && player->GetPlayerBarInfo(i))
+			{ // 게임 시작 bool 넣고 SetStart하면 false로 전환되는 시스템 Catch에도 써먹을 예정
+
 				int a = 0;
 				a = x;
 				if (i == 0)
@@ -89,23 +93,32 @@ int CBall::SetBrick_judgement(CBrick *brick, CPlayerbar *player, bool Catch) // 
 				else if (x < -5)
 					x = -4;
 				y *= -1;
+
+				if (Catch && Timer > 200)
+				{
+					saveX = x;
+					saveY = y;
+					x = 0;
+					y = 0;
+					bounce = true;
+				}
 				break;
 			}
 		}
+		if (m_Ball.left <= 0 || m_Ball.right >= 900)
+		{
+			x *= -1;
+		}
+		else if (m_Ball.top <= 0)
+		{
+			y *= -1;
+		}
+		else if (m_Ball.bottom >= 800)
+		{
+			GetBall();
+		}
 	}
-	if (m_Ball.left <= 0 || m_Ball.right >= 900)
-	{
-		x *= -1;
-	}
-	else if (m_Ball.top <= 0)
-	{
-		y *= -1;
-	}
-	else if (m_Ball.bottom >= 800)
-	{
-		GetBall();
-	}
-	return 3;
+	return bounce;
 }
 
 void CBall::SetBall_Move()
@@ -131,8 +144,8 @@ void CBall::SetStart(bool Catch)
 {
 	if (Catch == false)
 	{
-		y = -3;
-		x = 1;
+		y = -4;
+		x = 2;
 	}
 	else
 	{
@@ -143,28 +156,60 @@ void CBall::SetStart(bool Catch)
 	}
 }
 
-void CBall::SetBallMove(int a, int b)
+void CBall::SetBallMove(int a, int b, bool Catch)
 {
-	if (m_Ball.right >= 857)
+	if (Catch == false)
 	{
-		if (a < 0)
+		if (m_Ball.right >= 857)
 		{
-			m_Ball.OffsetRect(a, b);
+			if (a < 0)
+			{
+				m_Ball.OffsetRect(a, b);
+			}
 		}
-	}
-	else if (m_Ball.left <= 43)
-	{
-		if (a > 0)
+		else if (m_Ball.left <= 43)
+		{
+			if (a > 0)
+			{
+				m_Ball.OffsetRect(a, b);
+			}
+		}
+		else
 		{
 			m_Ball.OffsetRect(a, b);
 		}
 	}
 	else
 	{
-		m_Ball.OffsetRect(a, b);
+		if (m_Ball.right >= 900)
+		{
+			if (a < 0)
+			{
+				m_Ball.OffsetRect(a, b);
+			}
+		}
+		else if (m_Ball.left <= 0)
+		{
+			if (a > 0)
+			{
+				m_Ball.OffsetRect(a, b);
+			}
+		}
+		else
+		{
+			m_Ball.OffsetRect(a, b);
+		}
 	}
 }
 
+void CBall::SetSpeedUp()
+{
+	if (y > 0)
+		y++;
+	else
+		y--;
+
+}
 void CBall::SetItemBall(CRect ball)
 {
 	m_Ball = CRect(ball.left, ball.top, ball.right, ball.bottom);
@@ -209,5 +254,16 @@ void CBall::SetSpeedSlow()
 			y = -1;
 		else
 			y /= 2;
+	}
+}
+
+void CBall::SetSplitBall(int Speedx, int Speedy, CRect ball)
+{
+	if (m_Alive == false)
+	{
+		m_Ball = CRect(ball.left, ball.top, ball.right, ball.bottom);
+		m_Alive = true;
+		x = Speedx;
+		y = Speedy;
 	}
 }
